@@ -66,6 +66,9 @@ const Dashboard = () => {
       (copiesRes.data || []).forEach((copy) => {
         activity.push({ action: "Copy gerada", detail: copy.product_service, time: timeAgo(copy.created_at) });
       });
+      (funnelsRes.data || []).forEach((f) => {
+        activity.push({ action: "Funil criado", detail: f.product_service, time: timeAgo(f.created_at) });
+      });
 
       // Sort by most recent (approximate via time string, but we can sort by original)
       activity.sort((a, b) => {
