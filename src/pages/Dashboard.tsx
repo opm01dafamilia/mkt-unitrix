@@ -49,6 +49,7 @@ const Dashboard = () => {
       setAdCount(adsRes.count || 0);
       setCopyCount(copiesRes.count || 0);
       setFunnelCount(funnelsRes.count || 0);
+      setCampaignCount(campaignsRes.count || 0);
 
       // Build recent activity from real data
       const activity: RecentItem[] = [];
