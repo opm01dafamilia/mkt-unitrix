@@ -1,13 +1,9 @@
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Megaphone, FileText, GitBranch, TrendingUp, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
-
-const stats = [
-  { title: "Campanhas Criadas", value: "24", change: "+12%", up: true, icon: TrendingUp },
-  { title: "Anúncios Gerados", value: "156", change: "+8%", up: true, icon: Megaphone },
-  { title: "Funis Criados", value: "12", change: "+23%", up: true, icon: GitBranch },
-  { title: "Copies Geradas", value: "89", change: "-3%", up: false, icon: FileText },
-];
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 const performanceData = [
   { name: "Jan", impressoes: 4000, cliques: 2400, conversoes: 400 },
@@ -26,14 +22,72 @@ const campaignData = [
   { name: "LinkedIn", valor: 1800 },
 ];
 
-const recentActivity = [
-  { action: "Anúncio criado", detail: "Campanha Black Friday", time: "2 min atrás" },
-  { action: "Copy gerada", detail: "Landing page SaaS", time: "15 min atrás" },
-  { action: "Funil criado", detail: "Funil de webinar", time: "1h atrás" },
-  { action: "Campanha analisada", detail: "Q4 Performance", time: "3h atrás" },
-];
+interface RecentItem {
+  action: string;
+  detail: string;
+  time: string;
+}
 
 const Dashboard = () => {
+  const { user } = useAuth();
+  const [adCount, setAdCount] = useState(0);
+  const [copyCount, setCopyCount] = useState(0);
+  const [recentActivity, setRecentActivity] = useState<RecentItem[]>([]);
+
+  useEffect(() => {
+    if (!user) return;
+    const fetchCounts = async () => {
+      const [adsRes, copiesRes] = await Promise.all([
+        supabase.from("ad_generations").select("id, product_service, created_at", { count: "exact" }).eq("user_id", user.id).order("created_at", { ascending: false }).limit(5),
+        supabase.from("copy_generations").select("id, product_service, created_at", { count: "exact" }).eq("user_id", user.id).order("created_at", { ascending: false }).limit(5),
+      ]);
+
+      setAdCount(adsRes.count || 0);
+      setCopyCount(copiesRes.count || 0);
+
+      // Build recent activity from real data
+      const activity: RecentItem[] = [];
+      const now = Date.now();
+      const timeAgo = (date: string) => {
+        const diff = now - new Date(date).getTime();
+        const mins = Math.floor(diff / 60000);
+        if (mins < 60) return `${mins} min atrás`;
+        const hours = Math.floor(mins / 60);
+        if (hours < 24) return `${hours}h atrás`;
+        return `${Math.floor(hours / 24)}d atrás`;
+      };
+
+      (adsRes.data || []).forEach((ad) => {
+        activity.push({ action: "Anúncio gerado", detail: ad.product_service, time: timeAgo(ad.created_at) });
+      });
+      (copiesRes.data || []).forEach((copy) => {
+        activity.push({ action: "Copy gerada", detail: copy.product_service, time: timeAgo(copy.created_at) });
+      });
+
+      // Sort by most recent (approximate via time string, but we can sort by original)
+      activity.sort((a, b) => {
+        const extractMins = (t: string) => {
+          const num = parseInt(t);
+          if (t.includes("min")) return num;
+          if (t.includes("h")) return num * 60;
+          if (t.includes("d")) return num * 1440;
+          return 9999;
+        };
+        return extractMins(a.time) - extractMins(b.time);
+      });
+
+      setRecentActivity(activity.slice(0, 5));
+    };
+    fetchCounts();
+  }, [user]);
+
+  const stats = [
+    { title: "Campanhas Criadas", value: "0", change: "--", up: true, icon: TrendingUp },
+    { title: "Anúncios Gerados", value: String(adCount), change: adCount > 0 ? `${adCount}` : "--", up: adCount > 0, icon: Megaphone },
+    { title: "Funis Criados", value: "0", change: "--", up: true, icon: GitBranch },
+    { title: "Copies Geradas", value: String(copyCount), change: copyCount > 0 ? `${copyCount}` : "--", up: copyCount > 0, icon: FileText },
+  ];
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
@@ -47,7 +101,7 @@ const Dashboard = () => {
             <CardContent className="p-5">
               <div className="flex items-center justify-between">
                 <stat.icon className="h-5 w-5 text-primary" />
-                <span className={`text-xs font-medium flex items-center gap-1 ${stat.up ? "text-primary" : "text-destructive"}`}>
+                <span className={`text-xs font-medium flex items-center gap-1 ${stat.up ? "text-primary" : "text-muted-foreground"}`}>
                   {stat.up ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
                   {stat.change}
                 </span>
@@ -123,15 +177,19 @@ const Dashboard = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {recentActivity.map((item, i) => (
-              <div key={i} className="flex items-center justify-between py-2 border-b border-border/50 last:border-0">
-                <div>
-                  <p className="text-sm font-medium">{item.action}</p>
-                  <p className="text-xs text-muted-foreground">{item.detail}</p>
+            {recentActivity.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-4">Nenhuma atividade recente. Comece gerando anúncios ou copies!</p>
+            ) : (
+              recentActivity.map((item, i) => (
+                <div key={i} className="flex items-center justify-between py-2 border-b border-border/50 last:border-0">
+                  <div>
+                    <p className="text-sm font-medium">{item.action}</p>
+                    <p className="text-xs text-muted-foreground">{item.detail}</p>
+                  </div>
+                  <span className="text-xs text-muted-foreground">{item.time}</span>
                 </div>
-                <span className="text-xs text-muted-foreground">{item.time}</span>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </CardContent>
       </Card>
