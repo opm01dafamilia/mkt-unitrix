@@ -67,14 +67,16 @@ const History = () => {
   useEffect(() => {
     if (!user) return;
     const fetchData = async () => {
-      const [adsRes, copiesRes, funnelsRes] = await Promise.all([
+      const [adsRes, copiesRes, funnelsRes, campaignsRes] = await Promise.all([
         supabase.from("ad_generations").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
         supabase.from("copy_generations").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
         supabase.from("funnel_generations").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
+        supabase.from("campaign_analysis").select("id, campaign_name, platform, ad_cost, leads, sales, created_at").eq("user_id", user.id).order("created_at", { ascending: false }),
       ]);
       setAdGenerations(adsRes.data || []);
       setCopyGenerations(copiesRes.data || []);
       setFunnelGenerations(funnelsRes.data || []);
+      setCampaignItems((campaignsRes.data as CampaignItem[]) || []);
       setLoading(false);
     };
     fetchData();
