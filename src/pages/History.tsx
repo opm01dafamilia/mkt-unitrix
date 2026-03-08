@@ -201,23 +201,29 @@ const History = () => {
         </TabsContent>
 
         <TabsContent value="campanhas" className="mt-4 space-y-3">
-          {mockCampanhas.map((item, i) => (
-            <Card key={i} className="glass-card">
-              <CardContent className="p-4 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <BarChart3 className="h-4 w-4 text-primary" />
-                  <div>
-                    <p className="text-sm font-medium">{item.title}</p>
-                    <p className="text-xs text-muted-foreground">{item.period}</p>
+          {loading ? (
+            <div className="text-sm text-muted-foreground text-center py-8">Carregando...</div>
+          ) : campaignItems.length === 0 ? (
+            <div className="text-sm text-muted-foreground text-center py-8">Nenhuma campanha registrada ainda</div>
+          ) : (
+            campaignItems.map((item) => (
+              <Card key={item.id} className="glass-card">
+                <CardContent className="p-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <BarChart3 className="h-4 w-4 text-primary" />
+                    <div>
+                      <p className="text-sm font-medium">{item.campaign_name}</p>
+                      <p className="text-xs text-muted-foreground">{item.platform} · {item.leads} leads · {item.sales} vendas</p>
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="text-xs text-primary font-medium">ROI: {item.roi}</span>
-                  <span className="text-xs text-muted-foreground flex items-center gap-1"><Clock className="h-3 w-3" />{item.date}</span>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                  <div className="flex items-center gap-3">
+                    <Badge variant="outline" className="text-xs">R$ {Number(item.ad_cost).toFixed(2)}</Badge>
+                    <span className="text-xs text-muted-foreground flex items-center gap-1"><Clock className="h-3 w-3" />{formatDate(item.created_at)}</span>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          )}
         </TabsContent>
       </Tabs>
 
