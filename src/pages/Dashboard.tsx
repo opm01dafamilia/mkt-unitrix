@@ -72,6 +72,9 @@ const Dashboard = () => {
       (funnelsRes.data || []).forEach((f) => {
         activity.push({ action: "Funil criado", detail: f.product_service, time: timeAgo(f.created_at) });
       });
+      (campaignsRes.data || []).forEach((c: any) => {
+        activity.push({ action: "Campanha registrada", detail: c.campaign_name, time: timeAgo(c.created_at) });
+      });
 
       // Sort by most recent (approximate via time string, but we can sort by original)
       activity.sort((a, b) => {
