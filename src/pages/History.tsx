@@ -36,11 +36,15 @@ interface FunnelGeneration {
   created_at: string;
 }
 
-const mockCampanhas = [
-  { title: "Performance Q4 2025", period: "Out-Dez 2025", date: "05/01/2026", roi: "280%" },
-  { title: "Black Friday 2025", period: "Nov 2025", date: "01/12/2025", roi: "420%" },
-  { title: "Lançamento Beta", period: "Set 2025", date: "01/10/2025", roi: "180%" },
-];
+interface CampaignItem {
+  id: string;
+  campaign_name: string;
+  platform: string;
+  ad_cost: number;
+  leads: number;
+  sales: number;
+  created_at: string;
+}
 
 const funnelTypeLabels: Record<string, string> = {
   captura_leads: "Captura de Leads",
@@ -54,6 +58,7 @@ const History = () => {
   const [adGenerations, setAdGenerations] = useState<AdGeneration[]>([]);
   const [copyGenerations, setCopyGenerations] = useState<CopyGeneration[]>([]);
   const [funnelGenerations, setFunnelGenerations] = useState<FunnelGeneration[]>([]);
+  const [campaignItems, setCampaignItems] = useState<CampaignItem[]>([]);
   const [selectedAd, setSelectedAd] = useState<AdGeneration | null>(null);
   const [selectedCopy, setSelectedCopy] = useState<CopyGeneration | null>(null);
   const [selectedFunnel, setSelectedFunnel] = useState<FunnelGeneration | null>(null);
@@ -62,14 +67,16 @@ const History = () => {
   useEffect(() => {
     if (!user) return;
     const fetchData = async () => {
-      const [adsRes, copiesRes, funnelsRes] = await Promise.all([
+      const [adsRes, copiesRes, funnelsRes, campaignsRes] = await Promise.all([
         supabase.from("ad_generations").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
         supabase.from("copy_generations").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
         supabase.from("funnel_generations").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
+        supabase.from("campaign_analysis").select("id, campaign_name, platform, ad_cost, leads, sales, created_at").eq("user_id", user.id).order("created_at", { ascending: false }),
       ]);
       setAdGenerations(adsRes.data || []);
       setCopyGenerations(copiesRes.data || []);
       setFunnelGenerations(funnelsRes.data || []);
+      setCampaignItems((campaignsRes.data as CampaignItem[]) || []);
       setLoading(false);
     };
     fetchData();
@@ -194,23 +201,29 @@ const History = () => {
         </TabsContent>
 
         <TabsContent value="campanhas" className="mt-4 space-y-3">
-          {mockCampanhas.map((item, i) => (
-            <Card key={i} className="glass-card">
-              <CardContent className="p-4 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <BarChart3 className="h-4 w-4 text-primary" />
-                  <div>
-                    <p className="text-sm font-medium">{item.title}</p>
-                    <p className="text-xs text-muted-foreground">{item.period}</p>
+          {loading ? (
+            <div className="text-sm text-muted-foreground text-center py-8">Carregando...</div>
+          ) : campaignItems.length === 0 ? (
+            <div className="text-sm text-muted-foreground text-center py-8">Nenhuma campanha registrada ainda</div>
+          ) : (
+            campaignItems.map((item) => (
+              <Card key={item.id} className="glass-card">
+                <CardContent className="p-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <BarChart3 className="h-4 w-4 text-primary" />
+                    <div>
+                      <p className="text-sm font-medium">{item.campaign_name}</p>
+                      <p className="text-xs text-muted-foreground">{item.platform} · {item.leads} leads · {item.sales} vendas</p>
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="text-xs text-primary font-medium">ROI: {item.roi}</span>
-                  <span className="text-xs text-muted-foreground flex items-center gap-1"><Clock className="h-3 w-3" />{item.date}</span>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                  <div className="flex items-center gap-3">
+                    <Badge variant="outline" className="text-xs">R$ {Number(item.ad_cost).toFixed(2)}</Badge>
+                    <span className="text-xs text-muted-foreground flex items-center gap-1"><Clock className="h-3 w-3" />{formatDate(item.created_at)}</span>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          )}
         </TabsContent>
       </Tabs>
 

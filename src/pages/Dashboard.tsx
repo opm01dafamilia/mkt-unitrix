@@ -33,20 +33,23 @@ const Dashboard = () => {
   const [adCount, setAdCount] = useState(0);
   const [copyCount, setCopyCount] = useState(0);
   const [funnelCount, setFunnelCount] = useState(0);
+  const [campaignCount, setCampaignCount] = useState(0);
   const [recentActivity, setRecentActivity] = useState<RecentItem[]>([]);
 
   useEffect(() => {
     if (!user) return;
     const fetchCounts = async () => {
-      const [adsRes, copiesRes, funnelsRes] = await Promise.all([
+      const [adsRes, copiesRes, funnelsRes, campaignsRes] = await Promise.all([
         supabase.from("ad_generations").select("id, product_service, created_at", { count: "exact" }).eq("user_id", user.id).order("created_at", { ascending: false }).limit(5),
         supabase.from("copy_generations").select("id, product_service, created_at", { count: "exact" }).eq("user_id", user.id).order("created_at", { ascending: false }).limit(5),
         supabase.from("funnel_generations").select("id, product_service, created_at", { count: "exact" }).eq("user_id", user.id).order("created_at", { ascending: false }).limit(5),
+        supabase.from("campaign_analysis").select("id, campaign_name, created_at", { count: "exact" }).eq("user_id", user.id).order("created_at", { ascending: false }).limit(5),
       ]);
 
       setAdCount(adsRes.count || 0);
       setCopyCount(copiesRes.count || 0);
       setFunnelCount(funnelsRes.count || 0);
+      setCampaignCount(campaignsRes.count || 0);
 
       // Build recent activity from real data
       const activity: RecentItem[] = [];
@@ -69,6 +72,9 @@ const Dashboard = () => {
       (funnelsRes.data || []).forEach((f) => {
         activity.push({ action: "Funil criado", detail: f.product_service, time: timeAgo(f.created_at) });
       });
+      (campaignsRes.data || []).forEach((c: any) => {
+        activity.push({ action: "Campanha registrada", detail: c.campaign_name, time: timeAgo(c.created_at) });
+      });
 
       // Sort by most recent (approximate via time string, but we can sort by original)
       activity.sort((a, b) => {
@@ -88,7 +94,7 @@ const Dashboard = () => {
   }, [user]);
 
   const stats = [
-    { title: "Campanhas Criadas", value: "0", change: "--", up: true, icon: TrendingUp },
+    { title: "Campanhas Criadas", value: String(campaignCount), change: campaignCount > 0 ? `${campaignCount}` : "--", up: campaignCount > 0, icon: TrendingUp },
     { title: "Anúncios Gerados", value: String(adCount), change: adCount > 0 ? `${adCount}` : "--", up: adCount > 0, icon: Megaphone },
     { title: "Funis Criados", value: String(funnelCount), change: funnelCount > 0 ? `${funnelCount}` : "--", up: funnelCount > 0, icon: GitBranch },
     { title: "Copies Geradas", value: String(copyCount), change: copyCount > 0 ? `${copyCount}` : "--", up: copyCount > 0, icon: FileText },
