@@ -54,10 +54,14 @@ export type Database = {
           campaign_name: string
           clicks: number | null
           created_at: string
+          end_date: string | null
           id: string
           impressions: number | null
           leads: number | null
+          objective: string | null
+          platform: string | null
           sales: number | null
+          start_date: string | null
           user_id: string
         }
         Insert: {
@@ -66,10 +70,14 @@ export type Database = {
           campaign_name: string
           clicks?: number | null
           created_at?: string
+          end_date?: string | null
           id?: string
           impressions?: number | null
           leads?: number | null
+          objective?: string | null
+          platform?: string | null
           sales?: number | null
+          start_date?: string | null
           user_id: string
         }
         Update: {
@@ -78,10 +86,14 @@ export type Database = {
           campaign_name?: string
           clicks?: number | null
           created_at?: string
+          end_date?: string | null
           id?: string
           impressions?: number | null
           leads?: number | null
+          objective?: string | null
+          platform?: string | null
           sales?: number | null
+          start_date?: string | null
           user_id?: string
         }
         Relationships: []
