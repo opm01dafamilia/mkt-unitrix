@@ -28,11 +28,13 @@ interface CopyGeneration {
   created_at: string;
 }
 
-const mockFunis = [
-  { title: "Funil de Webinar", steps: 4, date: "03/03/2026", status: "Ativo" },
-  { title: "Funil de Lançamento", steps: 5, date: "20/02/2026", status: "Pausado" },
-  { title: "Funil Evergreen", steps: 3, date: "10/02/2026", status: "Ativo" },
-];
+interface FunnelGeneration {
+  id: string;
+  product_service: string;
+  funnel_type: string;
+  generated_funnel: any;
+  created_at: string;
+}
 
 const mockCampanhas = [
   { title: "Performance Q4 2025", period: "Out-Dez 2025", date: "05/01/2026", roi: "280%" },
@@ -40,23 +42,34 @@ const mockCampanhas = [
   { title: "Lançamento Beta", period: "Set 2025", date: "01/10/2025", roi: "180%" },
 ];
 
+const funnelTypeLabels: Record<string, string> = {
+  captura_leads: "Captura de Leads",
+  venda_direta: "Venda Direta",
+  lancamento: "Lançamento",
+  funil_conteudo: "Funil de Conteúdo",
+};
+
 const History = () => {
   const { user } = useAuth();
   const [adGenerations, setAdGenerations] = useState<AdGeneration[]>([]);
   const [copyGenerations, setCopyGenerations] = useState<CopyGeneration[]>([]);
+  const [funnelGenerations, setFunnelGenerations] = useState<FunnelGeneration[]>([]);
   const [selectedAd, setSelectedAd] = useState<AdGeneration | null>(null);
   const [selectedCopy, setSelectedCopy] = useState<CopyGeneration | null>(null);
+  const [selectedFunnel, setSelectedFunnel] = useState<FunnelGeneration | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!user) return;
     const fetchData = async () => {
-      const [adsRes, copiesRes] = await Promise.all([
+      const [adsRes, copiesRes, funnelsRes] = await Promise.all([
         supabase.from("ad_generations").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
         supabase.from("copy_generations").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
+        supabase.from("funnel_generations").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
       ]);
       setAdGenerations(adsRes.data || []);
       setCopyGenerations(copiesRes.data || []);
+      setFunnelGenerations(funnelsRes.data || []);
       setLoading(false);
     };
     fetchData();
@@ -150,23 +163,34 @@ const History = () => {
         </TabsContent>
 
         <TabsContent value="funis" className="mt-4 space-y-3">
-          {mockFunis.map((item, i) => (
-            <Card key={i} className="glass-card">
-              <CardContent className="p-4 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <GitBranch className="h-4 w-4 text-primary" />
-                  <div>
-                    <p className="text-sm font-medium">{item.title}</p>
-                    <p className="text-xs text-muted-foreground">{item.steps} etapas</p>
+          {loading ? (
+            <div className="text-sm text-muted-foreground text-center py-8">Carregando...</div>
+          ) : funnelGenerations.length === 0 ? (
+            <div className="text-sm text-muted-foreground text-center py-8">Nenhum funil gerado ainda</div>
+          ) : (
+            funnelGenerations.map((item) => (
+              <Card key={item.id} className="glass-card">
+                <CardContent className="p-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <GitBranch className="h-4 w-4 text-primary" />
+                    <div>
+                      <p className="text-sm font-medium">{item.product_service}</p>
+                      <p className="text-xs text-muted-foreground">{funnelTypeLabels[item.funnel_type] || item.funnel_type} · {item.generated_funnel?.stages?.length || 0} etapas</p>
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="text-xs text-muted-foreground flex items-center gap-1"><Clock className="h-3 w-3" />{item.date}</span>
-                  <Badge variant={item.status === "Ativo" ? "default" : "secondary"}>{item.status}</Badge>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs text-muted-foreground flex items-center gap-1">
+                      <Clock className="h-3 w-3" />{formatDate(item.created_at)}
+                    </span>
+                    <Button variant="ghost" size="sm" onClick={() => setSelectedFunnel(item)}>
+                      <Eye className="h-3 w-3" />
+                    </Button>
+                    <Badge variant="secondary">Concluído</Badge>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          )}
         </TabsContent>
 
         <TabsContent value="campanhas" className="mt-4 space-y-3">
@@ -247,6 +271,59 @@ const History = () => {
                   </CardContent>
                 </Card>
               ))}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Funnel Detail Dialog */}
+      <Dialog open={!!selectedFunnel} onOpenChange={() => setSelectedFunnel(null)}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Funil de Vendas</DialogTitle>
+          </DialogHeader>
+          {selectedFunnel && selectedFunnel.generated_funnel && (
+            <div className="space-y-4">
+              <p className="text-xs text-muted-foreground">
+                {selectedFunnel.product_service} · {funnelTypeLabels[selectedFunnel.funnel_type] || selectedFunnel.funnel_type} · {formatDate(selectedFunnel.created_at)}
+              </p>
+
+              <div>
+                <p className="text-sm font-semibold mb-2">Etapas</p>
+                <div className="space-y-2">
+                  {(selectedFunnel.generated_funnel.stages || []).map((s: any, i: number) => (
+                    <div key={i} className="p-3 rounded-md bg-secondary/50">
+                      <p className="text-sm font-medium">{s.name}</p>
+                      <p className="text-xs text-muted-foreground">{s.objective}</p>
+                      <p className="text-xs text-muted-foreground">{s.content_type} · {s.user_action}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <p className="text-sm font-semibold mb-2">E-mails</p>
+                <div className="space-y-2">
+                  {(selectedFunnel.generated_funnel.email_sequence || []).map((e: any, i: number) => (
+                    <div key={i} className="p-3 rounded-md bg-secondary/50">
+                      <p className="text-sm font-medium">{e.subject}</p>
+                      <p className="text-xs text-muted-foreground">{e.summary}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <p className="text-sm font-semibold mb-2">Anúncios</p>
+                <div className="space-y-2">
+                  {(selectedFunnel.generated_funnel.ad_sequence || []).map((a: any, i: number) => (
+                    <div key={i} className="p-3 rounded-md bg-secondary/50">
+                      <p className="text-sm font-medium">{a.type}: {a.objective}</p>
+                      <p className="text-xs text-muted-foreground">{a.idea}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           )}
         </DialogContent>

@@ -32,6 +32,7 @@ const Dashboard = () => {
   const { user } = useAuth();
   const [adCount, setAdCount] = useState(0);
   const [copyCount, setCopyCount] = useState(0);
+  const [funnelCount, setFunnelCount] = useState(0);
   const [recentActivity, setRecentActivity] = useState<RecentItem[]>([]);
 
   useEffect(() => {
