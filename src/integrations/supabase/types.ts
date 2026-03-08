@@ -14,7 +14,204 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      ad_generations: {
+        Row: {
+          campaign_goal: string
+          created_at: string
+          generated_ads: Json | null
+          id: string
+          platform: string
+          product_service: string
+          target_audience: string
+          user_id: string
+        }
+        Insert: {
+          campaign_goal: string
+          created_at?: string
+          generated_ads?: Json | null
+          id?: string
+          platform: string
+          product_service: string
+          target_audience: string
+          user_id: string
+        }
+        Update: {
+          campaign_goal?: string
+          created_at?: string
+          generated_ads?: Json | null
+          id?: string
+          platform?: string
+          product_service?: string
+          target_audience?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      campaign_analysis: {
+        Row: {
+          ad_cost: number | null
+          analysis_result: Json | null
+          campaign_name: string
+          clicks: number | null
+          created_at: string
+          id: string
+          impressions: number | null
+          leads: number | null
+          sales: number | null
+          user_id: string
+        }
+        Insert: {
+          ad_cost?: number | null
+          analysis_result?: Json | null
+          campaign_name: string
+          clicks?: number | null
+          created_at?: string
+          id?: string
+          impressions?: number | null
+          leads?: number | null
+          sales?: number | null
+          user_id: string
+        }
+        Update: {
+          ad_cost?: number | null
+          analysis_result?: Json | null
+          campaign_name?: string
+          clicks?: number | null
+          created_at?: string
+          id?: string
+          impressions?: number | null
+          leads?: number | null
+          sales?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      content_ideas: {
+        Row: {
+          content_type: string
+          created_at: string
+          generated_ideas: Json | null
+          id: string
+          niche: string
+          platform: string
+          user_id: string
+        }
+        Insert: {
+          content_type: string
+          created_at?: string
+          generated_ideas?: Json | null
+          id?: string
+          niche: string
+          platform: string
+          user_id: string
+        }
+        Update: {
+          content_type?: string
+          created_at?: string
+          generated_ideas?: Json | null
+          id?: string
+          niche?: string
+          platform?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      copy_generations: {
+        Row: {
+          content_type: string
+          created_at: string
+          generated_copy: Json | null
+          id: string
+          product_service: string
+          sales_goal: string
+          target_audience: string
+          user_id: string
+        }
+        Insert: {
+          content_type: string
+          created_at?: string
+          generated_copy?: Json | null
+          id?: string
+          product_service: string
+          sales_goal: string
+          target_audience: string
+          user_id: string
+        }
+        Update: {
+          content_type?: string
+          created_at?: string
+          generated_copy?: Json | null
+          id?: string
+          product_service?: string
+          sales_goal?: string
+          target_audience?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      funnel_generations: {
+        Row: {
+          created_at: string
+          funnel_type: string
+          generated_funnel: Json | null
+          id: string
+          product_service: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          funnel_type: string
+          generated_funnel?: Json | null
+          id?: string
+          product_service: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          funnel_type?: string
+          generated_funnel?: Json | null
+          id?: string
+          product_service?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          business_type: string | null
+          created_at: string
+          email: string | null
+          full_name: string | null
+          id: string
+          main_goal: string | null
+          niche: string | null
+          onboarding_completed: boolean
+          user_id: string
+        }
+        Insert: {
+          business_type?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          main_goal?: string | null
+          niche?: string | null
+          onboarding_completed?: boolean
+          user_id: string
+        }
+        Update: {
+          business_type?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          main_goal?: string | null
+          niche?: string | null
+          onboarding_completed?: boolean
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
