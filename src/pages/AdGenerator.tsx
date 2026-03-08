@@ -5,31 +5,90 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Megaphone, Copy, Sparkles } from "lucide-react";
+import { Megaphone, Copy, Sparkles, Save, Check, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
-const mockAds = [
-  {
-    platform: "Facebook",
-    headline: "🚀 Transforme seu negócio com MarketFlow",
-    body: "Automatize suas campanhas de marketing e aumente suas vendas em até 300%. Experimente grátis por 14 dias!",
-    cta: "Comece Agora",
-  },
-  {
-    platform: "Instagram",
-    headline: "Marketing inteligente, resultados reais ✨",
-    body: "Crie anúncios, copies e funis de vendas com IA. Mais de 10.000 empresas já usam.",
-    cta: "Saiba Mais",
-  },
-  {
-    platform: "Google Ads",
-    headline: "Ferramentas de Marketing com IA | MarketFlow",
-    body: "Gere anúncios profissionais em segundos. Otimize campanhas automaticamente. ROI garantido.",
-    cta: "Teste Grátis",
-  },
-];
+interface Ad {
+  headline: string;
+  body: string;
+  cta: string;
+}
 
 const AdGenerator = () => {
-  const [generated, setGenerated] = useState(false);
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [ads, setAds] = useState<Ad[]>([]);
+  const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+
+  const [productService, setProductService] = useState("");
+  const [targetAudience, setTargetAudience] = useState("");
+  const [campaignGoal, setCampaignGoal] = useState("");
+  const [platform, setPlatform] = useState("");
+  const [additionalInfo, setAdditionalInfo] = useState("");
+
+  const handleGenerate = async () => {
+    if (!productService || !targetAudience || !campaignGoal || !platform) {
+      toast.error("Preencha todos os campos obrigatórios");
+      return;
+    }
+
+    setLoading(true);
+    setAds([]);
+
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-ads", {
+        body: {
+          product_service: productService,
+          target_audience: targetAudience,
+          campaign_goal: campaignGoal,
+          platform,
+          additional_info: additionalInfo,
+        },
+      });
+
+      if (error) throw error;
+      setAds(data.ads);
+      toast.success("Anúncios gerados com sucesso!");
+    } catch (err: any) {
+      toast.error("Erro ao gerar anúncios: " + (err.message || "Tente novamente"));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCopy = (ad: Ad, index: number) => {
+    const text = `${ad.headline}\n\n${ad.body}\n\n${ad.cta}`;
+    navigator.clipboard.writeText(text);
+    setCopiedIndex(index);
+    toast.success("Anúncio copiado!");
+    setTimeout(() => setCopiedIndex(null), 2000);
+  };
+
+  const handleSave = async () => {
+    if (!user || ads.length === 0) return;
+    setSaving(true);
+
+    try {
+      const { error } = await supabase.from("ad_generations").insert({
+        user_id: user.id,
+        product_service: productService,
+        target_audience: targetAudience,
+        campaign_goal: campaignGoal,
+        platform,
+        generated_ads: ads as any,
+      });
+
+      if (error) throw error;
+      toast.success("Anúncios salvos no histórico!");
+    } catch (err: any) {
+      toast.error("Erro ao salvar: " + err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -48,16 +107,16 @@ const AdGenerator = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <Label>Produto ou Serviço</Label>
-              <Input placeholder="Ex: Plataforma SaaS de marketing" className="mt-1.5" />
+              <Label>Produto ou Serviço *</Label>
+              <Input placeholder="Ex: Plataforma SaaS de marketing" className="mt-1.5" value={productService} onChange={(e) => setProductService(e.target.value)} />
             </div>
             <div>
-              <Label>Público Alvo</Label>
-              <Input placeholder="Ex: Empreendedores digitais, 25-45 anos" className="mt-1.5" />
+              <Label>Público Alvo *</Label>
+              <Input placeholder="Ex: Empreendedores digitais, 25-45 anos" className="mt-1.5" value={targetAudience} onChange={(e) => setTargetAudience(e.target.value)} />
             </div>
             <div>
-              <Label>Objetivo da Campanha</Label>
-              <Select>
+              <Label>Objetivo da Campanha *</Label>
+              <Select value={campaignGoal} onValueChange={setCampaignGoal}>
                 <SelectTrigger className="mt-1.5">
                   <SelectValue placeholder="Selecione o objetivo" />
                 </SelectTrigger>
@@ -70,48 +129,66 @@ const AdGenerator = () => {
               </Select>
             </div>
             <div>
-              <Label>Plataforma</Label>
-              <Select>
+              <Label>Plataforma *</Label>
+              <Select value={platform} onValueChange={setPlatform}>
                 <SelectTrigger className="mt-1.5">
                   <SelectValue placeholder="Selecione a plataforma" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="facebook">Facebook</SelectItem>
-                  <SelectItem value="instagram">Instagram</SelectItem>
-                  <SelectItem value="google">Google Ads</SelectItem>
-                  <SelectItem value="tiktok">TikTok</SelectItem>
-                  <SelectItem value="linkedin">LinkedIn</SelectItem>
+                  <SelectItem value="Facebook">Facebook</SelectItem>
+                  <SelectItem value="Instagram">Instagram</SelectItem>
+                  <SelectItem value="Google Ads">Google Ads</SelectItem>
+                  <SelectItem value="TikTok">TikTok</SelectItem>
+                  <SelectItem value="LinkedIn">LinkedIn</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div>
               <Label>Informações Adicionais</Label>
-              <Textarea placeholder="Descreva detalhes extras sobre o produto..." className="mt-1.5" rows={3} />
+              <Textarea placeholder="Descreva detalhes extras sobre o produto..." className="mt-1.5" rows={3} value={additionalInfo} onChange={(e) => setAdditionalInfo(e.target.value)} />
             </div>
-            <Button className="w-full" onClick={() => setGenerated(true)}>
-              <Megaphone className="h-4 w-4 mr-2" />
-              Gerar Anúncios
+            <Button className="w-full" onClick={handleGenerate} disabled={loading}>
+              {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Megaphone className="h-4 w-4 mr-2" />}
+              {loading ? "Gerando..." : "Gerar Anúncios"}
             </Button>
           </CardContent>
         </Card>
 
         <div className="space-y-4">
-          {(generated ? mockAds : []).map((ad, i) => (
-            <Card key={i} className="glass-card glow-green" style={{ animationDelay: `${i * 100}ms` }}>
-              <CardContent className="p-5">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded">{ad.platform}</span>
-                  <Button variant="ghost" size="sm">
-                    <Copy className="h-3 w-3" />
-                  </Button>
-                </div>
-                <h3 className="font-semibold text-sm mb-2">{ad.headline}</h3>
-                <p className="text-sm text-muted-foreground mb-3">{ad.body}</p>
-                <Button size="sm" className="text-xs">{ad.cta}</Button>
-              </CardContent>
-            </Card>
-          ))}
-          {!generated && (
+          {loading && (
+            <div className="flex flex-col items-center justify-center h-64 text-muted-foreground">
+              <Loader2 className="h-12 w-12 mb-3 animate-spin text-primary" />
+              <p className="text-sm">Gerando anúncios com IA...</p>
+            </div>
+          )}
+
+          {!loading && ads.length > 0 && (
+            <>
+              <div className="flex justify-end">
+                <Button variant="outline" size="sm" onClick={handleSave} disabled={saving}>
+                  {saving ? <Loader2 className="h-3 w-3 mr-1.5 animate-spin" /> : <Save className="h-3 w-3 mr-1.5" />}
+                  Salvar no Histórico
+                </Button>
+              </div>
+              {ads.map((ad, i) => (
+                <Card key={i} className="glass-card glow-green animate-fade-in" style={{ animationDelay: `${i * 100}ms` }}>
+                  <CardContent className="p-5">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded">{platform}</span>
+                      <Button variant="ghost" size="sm" onClick={() => handleCopy(ad, i)}>
+                        {copiedIndex === i ? <Check className="h-3 w-3 text-primary" /> : <Copy className="h-3 w-3" />}
+                      </Button>
+                    </div>
+                    <h3 className="font-semibold text-sm mb-2">{ad.headline}</h3>
+                    <p className="text-sm text-muted-foreground mb-3">{ad.body}</p>
+                    <Button size="sm" className="text-xs">{ad.cta}</Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </>
+          )}
+
+          {!loading && ads.length === 0 && (
             <div className="flex flex-col items-center justify-center h-64 text-muted-foreground">
               <Megaphone className="h-12 w-12 mb-3 opacity-30" />
               <p className="text-sm">Preencha os campos e clique em gerar</p>

@@ -3,14 +3,44 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Moon, Sun } from "lucide-react";
+import { useTheme } from "@/contexts/ThemeContext";
 
 const SettingsPage = () => {
+  const { theme, setTheme } = useTheme();
+
   return (
     <div className="space-y-6 animate-fade-in max-w-2xl">
       <div>
         <h1 className="text-2xl font-bold">Configurações</h1>
         <p className="text-muted-foreground text-sm mt-1">Personalize sua experiência no MarketFlow</p>
       </div>
+
+      <Card className="glass-card">
+        <CardHeader><CardTitle className="text-base">Aparência</CardTitle></CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              {theme === "dark" ? <Moon className="h-4 w-4 text-primary" /> : <Sun className="h-4 w-4 text-primary" />}
+              <div>
+                <p className="text-sm font-medium">Tema do Aplicativo</p>
+                <p className="text-xs text-muted-foreground">
+                  {theme === "dark" ? "Modo escuro ativado" : "Modo claro ativado"}
+                </p>
+              </div>
+            </div>
+            <Select value={theme} onValueChange={(v: "light" | "dark") => setTheme(v)}>
+              <SelectTrigger className="w-32">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="light">Claro</SelectItem>
+                <SelectItem value="dark">Escuro</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
 
       <Card className="glass-card">
         <CardHeader><CardTitle className="text-base">Notificações</CardTitle></CardHeader>
