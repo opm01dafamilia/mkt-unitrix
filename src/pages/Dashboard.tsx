@@ -90,7 +90,7 @@ const Dashboard = () => {
   const stats = [
     { title: "Campanhas Criadas", value: "0", change: "--", up: true, icon: TrendingUp },
     { title: "Anúncios Gerados", value: String(adCount), change: adCount > 0 ? `${adCount}` : "--", up: adCount > 0, icon: Megaphone },
-    { title: "Funis Criados", value: "0", change: "--", up: true, icon: GitBranch },
+    { title: "Funis Criados", value: String(funnelCount), change: funnelCount > 0 ? `${funnelCount}` : "--", up: funnelCount > 0, icon: GitBranch },
     { title: "Copies Geradas", value: String(copyCount), change: copyCount > 0 ? `${copyCount}` : "--", up: copyCount > 0, icon: FileText },
   ];
 
