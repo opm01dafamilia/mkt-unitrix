@@ -36,11 +36,15 @@ interface FunnelGeneration {
   created_at: string;
 }
 
-const mockCampanhas = [
-  { title: "Performance Q4 2025", period: "Out-Dez 2025", date: "05/01/2026", roi: "280%" },
-  { title: "Black Friday 2025", period: "Nov 2025", date: "01/12/2025", roi: "420%" },
-  { title: "Lançamento Beta", period: "Set 2025", date: "01/10/2025", roi: "180%" },
-];
+interface CampaignItem {
+  id: string;
+  campaign_name: string;
+  platform: string;
+  ad_cost: number;
+  leads: number;
+  sales: number;
+  created_at: string;
+}
 
 const funnelTypeLabels: Record<string, string> = {
   captura_leads: "Captura de Leads",
