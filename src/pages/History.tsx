@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Megaphone, FileText, GitBranch, BarChart3, Clock, Eye } from "lucide-react";
+import { Megaphone, FileText, GitBranch, BarChart3, Clock, Eye, Loader2, Inbox } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -52,6 +52,19 @@ const funnelTypeLabels: Record<string, string> = {
   lancamento: "Lançamento",
   funil_conteudo: "Funil de Conteúdo",
 };
+
+const EmptyState = ({ message }: { message: string }) => (
+  <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+    <Inbox className="h-10 w-10 mb-3 opacity-30" />
+    <p className="text-sm">{message}</p>
+  </div>
+);
+
+const LoadingState = () => (
+  <div className="flex justify-center py-12">
+    <Loader2 className="h-6 w-6 animate-spin text-primary" />
+  </div>
+);
 
 const History = () => {
   const { user } = useAuth();
@@ -108,29 +121,26 @@ const History = () => {
         </TabsList>
 
         <TabsContent value="anuncios" className="mt-4 space-y-3">
-          {loading ? (
-            <div className="text-sm text-muted-foreground text-center py-8">Carregando...</div>
-          ) : adGenerations.length === 0 ? (
-            <div className="text-sm text-muted-foreground text-center py-8">Nenhum anúncio gerado ainda</div>
+          {loading ? <LoadingState /> : adGenerations.length === 0 ? (
+            <EmptyState message="Nenhum anúncio gerado ainda. Acesse o Gerador de Anúncios para começar." />
           ) : (
             adGenerations.map((item) => (
               <Card key={item.id} className="glass-card">
-                <CardContent className="p-4 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <Megaphone className="h-4 w-4 text-primary" />
-                    <div>
-                      <p className="text-sm font-medium">{item.product_service}</p>
+                <CardContent className="p-4 flex items-center justify-between flex-wrap gap-2">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <Megaphone className="h-4 w-4 text-primary shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium truncate">{item.product_service}</p>
                       <p className="text-xs text-muted-foreground">{item.platform} · {item.campaign_goal}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
                     <span className="text-xs text-muted-foreground flex items-center gap-1">
                       <Clock className="h-3 w-3" />{formatDate(item.created_at)}
                     </span>
-                    <Button variant="ghost" size="sm" onClick={() => setSelectedAd(item)}>
-                      <Eye className="h-3 w-3" />
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSelectedAd(item)}>
+                      <Eye className="h-3.5 w-3.5" />
                     </Button>
-                    <Badge variant="secondary">Concluído</Badge>
                   </div>
                 </CardContent>
               </Card>
@@ -139,29 +149,26 @@ const History = () => {
         </TabsContent>
 
         <TabsContent value="copies" className="mt-4 space-y-3">
-          {loading ? (
-            <div className="text-sm text-muted-foreground text-center py-8">Carregando...</div>
-          ) : copyGenerations.length === 0 ? (
-            <div className="text-sm text-muted-foreground text-center py-8">Nenhuma copy gerada ainda</div>
+          {loading ? <LoadingState /> : copyGenerations.length === 0 ? (
+            <EmptyState message="Nenhuma copy gerada ainda. Acesse o Gerador de Copy para começar." />
           ) : (
             copyGenerations.map((item) => (
               <Card key={item.id} className="glass-card">
-                <CardContent className="p-4 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <FileText className="h-4 w-4 text-primary" />
-                    <div>
-                      <p className="text-sm font-medium">{item.product_service}</p>
+                <CardContent className="p-4 flex items-center justify-between flex-wrap gap-2">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <FileText className="h-4 w-4 text-primary shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium truncate">{item.product_service}</p>
                       <p className="text-xs text-muted-foreground">{item.content_type} · {item.sales_goal}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
                     <span className="text-xs text-muted-foreground flex items-center gap-1">
                       <Clock className="h-3 w-3" />{formatDate(item.created_at)}
                     </span>
-                    <Button variant="ghost" size="sm" onClick={() => setSelectedCopy(item)}>
-                      <Eye className="h-3 w-3" />
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSelectedCopy(item)}>
+                      <Eye className="h-3.5 w-3.5" />
                     </Button>
-                    <Badge variant="secondary">Concluído</Badge>
                   </div>
                 </CardContent>
               </Card>
@@ -170,29 +177,26 @@ const History = () => {
         </TabsContent>
 
         <TabsContent value="funis" className="mt-4 space-y-3">
-          {loading ? (
-            <div className="text-sm text-muted-foreground text-center py-8">Carregando...</div>
-          ) : funnelGenerations.length === 0 ? (
-            <div className="text-sm text-muted-foreground text-center py-8">Nenhum funil gerado ainda</div>
+          {loading ? <LoadingState /> : funnelGenerations.length === 0 ? (
+            <EmptyState message="Nenhum funil gerado ainda. Acesse o Funil de Vendas para começar." />
           ) : (
             funnelGenerations.map((item) => (
               <Card key={item.id} className="glass-card">
-                <CardContent className="p-4 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <GitBranch className="h-4 w-4 text-primary" />
-                    <div>
-                      <p className="text-sm font-medium">{item.product_service}</p>
+                <CardContent className="p-4 flex items-center justify-between flex-wrap gap-2">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <GitBranch className="h-4 w-4 text-primary shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium truncate">{item.product_service}</p>
                       <p className="text-xs text-muted-foreground">{funnelTypeLabels[item.funnel_type] || item.funnel_type} · {item.generated_funnel?.stages?.length || 0} etapas</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
                     <span className="text-xs text-muted-foreground flex items-center gap-1">
                       <Clock className="h-3 w-3" />{formatDate(item.created_at)}
                     </span>
-                    <Button variant="ghost" size="sm" onClick={() => setSelectedFunnel(item)}>
-                      <Eye className="h-3 w-3" />
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSelectedFunnel(item)}>
+                      <Eye className="h-3.5 w-3.5" />
                     </Button>
-                    <Badge variant="secondary">Concluído</Badge>
                   </div>
                 </CardContent>
               </Card>
@@ -201,22 +205,20 @@ const History = () => {
         </TabsContent>
 
         <TabsContent value="campanhas" className="mt-4 space-y-3">
-          {loading ? (
-            <div className="text-sm text-muted-foreground text-center py-8">Carregando...</div>
-          ) : campaignItems.length === 0 ? (
-            <div className="text-sm text-muted-foreground text-center py-8">Nenhuma campanha registrada ainda</div>
+          {loading ? <LoadingState /> : campaignItems.length === 0 ? (
+            <EmptyState message="Nenhuma campanha registrada ainda. Acesse Análise de Campanhas para começar." />
           ) : (
             campaignItems.map((item) => (
               <Card key={item.id} className="glass-card">
-                <CardContent className="p-4 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <BarChart3 className="h-4 w-4 text-primary" />
-                    <div>
-                      <p className="text-sm font-medium">{item.campaign_name}</p>
+                <CardContent className="p-4 flex items-center justify-between flex-wrap gap-2">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <BarChart3 className="h-4 w-4 text-primary shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium truncate">{item.campaign_name}</p>
                       <p className="text-xs text-muted-foreground">{item.platform} · {item.leads} leads · {item.sales} vendas</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
                     <Badge variant="outline" className="text-xs">R$ {Number(item.ad_cost).toFixed(2)}</Badge>
                     <span className="text-xs text-muted-foreground flex items-center gap-1"><Clock className="h-3 w-3" />{formatDate(item.created_at)}</span>
                   </div>
@@ -229,7 +231,7 @@ const History = () => {
 
       {/* Ad Detail Dialog */}
       <Dialog open={!!selectedAd} onOpenChange={() => setSelectedAd(null)}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Anúncios Gerados</DialogTitle>
           </DialogHeader>
@@ -254,7 +256,7 @@ const History = () => {
 
       {/* Copy Detail Dialog */}
       <Dialog open={!!selectedCopy} onOpenChange={() => setSelectedCopy(null)}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Copies Geradas</DialogTitle>
           </DialogHeader>
