@@ -38,9 +38,10 @@ const Dashboard = () => {
   useEffect(() => {
     if (!user) return;
     const fetchCounts = async () => {
-      const [adsRes, copiesRes] = await Promise.all([
+      const [adsRes, copiesRes, funnelsRes] = await Promise.all([
         supabase.from("ad_generations").select("id, product_service, created_at", { count: "exact" }).eq("user_id", user.id).order("created_at", { ascending: false }).limit(5),
         supabase.from("copy_generations").select("id, product_service, created_at", { count: "exact" }).eq("user_id", user.id).order("created_at", { ascending: false }).limit(5),
+        supabase.from("funnel_generations").select("id, product_service, created_at", { count: "exact" }).eq("user_id", user.id).order("created_at", { ascending: false }).limit(5),
       ]);
 
       setAdCount(adsRes.count || 0);
