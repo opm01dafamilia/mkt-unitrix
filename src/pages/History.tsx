@@ -18,11 +18,15 @@ interface AdGeneration {
   created_at: string;
 }
 
-const mockCopies = [
-  { title: "Landing Page SaaS", type: "Landing Page", date: "04/03/2026", status: "Concluído" },
-  { title: "E-mail de Lançamento", type: "E-mail", date: "01/03/2026", status: "Concluído" },
-  { title: "Script YouTube", type: "Script de Vídeo", date: "25/02/2026", status: "Concluído" },
-];
+interface CopyGeneration {
+  id: string;
+  product_service: string;
+  target_audience: string;
+  sales_goal: string;
+  content_type: string;
+  generated_copy: any;
+  created_at: string;
+}
 
 const mockFunis = [
   { title: "Funil de Webinar", steps: 4, date: "03/03/2026", status: "Ativo" },
@@ -39,26 +43,26 @@ const mockCampanhas = [
 const History = () => {
   const { user } = useAuth();
   const [adGenerations, setAdGenerations] = useState<AdGeneration[]>([]);
+  const [copyGenerations, setCopyGenerations] = useState<CopyGeneration[]>([]);
   const [selectedAd, setSelectedAd] = useState<AdGeneration | null>(null);
+  const [selectedCopy, setSelectedCopy] = useState<CopyGeneration | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!user) return;
-    const fetchAds = async () => {
-      const { data } = await supabase
-        .from("ad_generations")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
-      setAdGenerations(data || []);
+    const fetchData = async () => {
+      const [adsRes, copiesRes] = await Promise.all([
+        supabase.from("ad_generations").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
+        supabase.from("copy_generations").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
+      ]);
+      setAdGenerations(adsRes.data || []);
+      setCopyGenerations(copiesRes.data || []);
       setLoading(false);
     };
-    fetchAds();
+    fetchData();
   }, [user]);
 
-  const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString("pt-BR");
-  };
+  const formatDate = (dateStr: string) => new Date(dateStr).toLocaleDateString("pt-BR");
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -115,23 +119,34 @@ const History = () => {
         </TabsContent>
 
         <TabsContent value="copies" className="mt-4 space-y-3">
-          {mockCopies.map((item, i) => (
-            <Card key={i} className="glass-card">
-              <CardContent className="p-4 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <FileText className="h-4 w-4 text-primary" />
-                  <div>
-                    <p className="text-sm font-medium">{item.title}</p>
-                    <p className="text-xs text-muted-foreground">{item.type}</p>
+          {loading ? (
+            <div className="text-sm text-muted-foreground text-center py-8">Carregando...</div>
+          ) : copyGenerations.length === 0 ? (
+            <div className="text-sm text-muted-foreground text-center py-8">Nenhuma copy gerada ainda</div>
+          ) : (
+            copyGenerations.map((item) => (
+              <Card key={item.id} className="glass-card">
+                <CardContent className="p-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <FileText className="h-4 w-4 text-primary" />
+                    <div>
+                      <p className="text-sm font-medium">{item.product_service}</p>
+                      <p className="text-xs text-muted-foreground">{item.content_type} · {item.sales_goal}</p>
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="text-xs text-muted-foreground flex items-center gap-1"><Clock className="h-3 w-3" />{item.date}</span>
-                  <Badge variant="secondary">{item.status}</Badge>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs text-muted-foreground flex items-center gap-1">
+                      <Clock className="h-3 w-3" />{formatDate(item.created_at)}
+                    </span>
+                    <Button variant="ghost" size="sm" onClick={() => setSelectedCopy(item)}>
+                      <Eye className="h-3 w-3" />
+                    </Button>
+                    <Badge variant="secondary">Concluído</Badge>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          )}
         </TabsContent>
 
         <TabsContent value="funis" className="mt-4 space-y-3">
@@ -175,6 +190,7 @@ const History = () => {
         </TabsContent>
       </Tabs>
 
+      {/* Ad Detail Dialog */}
       <Dialog open={!!selectedAd} onOpenChange={() => setSelectedAd(null)}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
@@ -191,6 +207,43 @@ const History = () => {
                     <h3 className="font-semibold text-sm mb-1">{ad.headline}</h3>
                     <p className="text-sm text-muted-foreground mb-2">{ad.body}</p>
                     <Badge>{ad.cta}</Badge>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Copy Detail Dialog */}
+      <Dialog open={!!selectedCopy} onOpenChange={() => setSelectedCopy(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Copies Geradas</DialogTitle>
+          </DialogHeader>
+          {selectedCopy && (
+            <div className="space-y-3">
+              <p className="text-xs text-muted-foreground">
+                {selectedCopy.content_type} · {selectedCopy.sales_goal} · {formatDate(selectedCopy.created_at)}
+              </p>
+              {Array.isArray(selectedCopy.generated_copy) && selectedCopy.generated_copy.map((copy: any, i: number) => (
+                <Card key={i} className="glass-card">
+                  <CardContent className="p-4 space-y-2">
+                    <p className="text-xs text-primary font-medium">HEADLINE</p>
+                    <h3 className="font-semibold text-sm">{copy.headline}</h3>
+                    <p className="text-xs text-primary font-medium mt-2">TEXTO</p>
+                    <p className="text-sm text-muted-foreground">{copy.body}</p>
+                    {copy.arguments && (
+                      <>
+                        <p className="text-xs text-primary font-medium mt-2">ARGUMENTOS</p>
+                        <ul className="space-y-1">
+                          {copy.arguments.map((arg: string, j: number) => (
+                            <li key={j} className="text-sm text-muted-foreground flex gap-2"><span className="text-primary">•</span>{arg}</li>
+                          ))}
+                        </ul>
+                      </>
+                    )}
+                    <Badge className="mt-2">{copy.cta}</Badge>
                   </CardContent>
                 </Card>
               ))}
