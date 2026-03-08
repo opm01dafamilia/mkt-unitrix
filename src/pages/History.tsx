@@ -58,6 +58,7 @@ const History = () => {
   const [adGenerations, setAdGenerations] = useState<AdGeneration[]>([]);
   const [copyGenerations, setCopyGenerations] = useState<CopyGeneration[]>([]);
   const [funnelGenerations, setFunnelGenerations] = useState<FunnelGeneration[]>([]);
+  const [campaignItems, setCampaignItems] = useState<CampaignItem[]>([]);
   const [selectedAd, setSelectedAd] = useState<AdGeneration | null>(null);
   const [selectedCopy, setSelectedCopy] = useState<CopyGeneration | null>(null);
   const [selectedFunnel, setSelectedFunnel] = useState<FunnelGeneration | null>(null);
