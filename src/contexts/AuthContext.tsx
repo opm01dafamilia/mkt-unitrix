@@ -12,6 +12,7 @@ interface Profile {
   business_type: string | null;
   main_goal: string | null;
   onboarding_completed: boolean;
+  is_admin?: boolean;
   created_at: string;
 }
 

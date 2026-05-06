@@ -19,6 +19,7 @@ import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
 import Onboarding from "./pages/Onboarding";
+import Admin from "./pages/Admin";
 
 const queryClient = new QueryClient();
 
@@ -108,6 +109,7 @@ const AppRoutes = () => (
     <Route path="/historico" element={<ProtectedRoute><AppLayout><History /></AppLayout></ProtectedRoute>} />
     <Route path="/perfil" element={<ProtectedRoute><AppLayout><Profile /></AppLayout></ProtectedRoute>} />
     <Route path="/configuracoes" element={<ProtectedRoute><AppLayout><SettingsPage /></AppLayout></ProtectedRoute>} />
+    <Route path="/admin" element={<ProtectedRoute><AppLayout><Admin /></AppLayout></ProtectedRoute>} />
     <Route path="*" element={<NotFound />} />
   </Routes>
 );

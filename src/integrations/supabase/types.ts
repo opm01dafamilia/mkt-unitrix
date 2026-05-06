@@ -195,6 +195,7 @@ export type Database = {
           email: string | null
           full_name: string | null
           id: string
+          is_admin: boolean
           main_goal: string | null
           niche: string | null
           onboarding_completed: boolean
@@ -206,6 +207,7 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id?: string
+          is_admin?: boolean
           main_goal?: string | null
           niche?: string | null
           onboarding_completed?: boolean
@@ -217,6 +219,7 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id?: string
+          is_admin?: boolean
           main_goal?: string | null
           niche?: string | null
           onboarding_completed?: boolean
@@ -229,7 +232,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_admin: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
       [_ in never]: never
