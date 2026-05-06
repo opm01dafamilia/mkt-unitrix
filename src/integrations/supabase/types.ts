@@ -199,6 +199,9 @@ export type Database = {
           main_goal: string | null
           niche: string | null
           onboarding_completed: boolean
+          plan: string | null
+          status: string
+          trial_ends_at: string | null
           user_id: string
         }
         Insert: {
@@ -211,6 +214,9 @@ export type Database = {
           main_goal?: string | null
           niche?: string | null
           onboarding_completed?: boolean
+          plan?: string | null
+          status?: string
+          trial_ends_at?: string | null
           user_id: string
         }
         Update: {
@@ -223,6 +229,9 @@ export type Database = {
           main_goal?: string | null
           niche?: string | null
           onboarding_completed?: boolean
+          plan?: string | null
+          status?: string
+          trial_ends_at?: string | null
           user_id?: string
         }
         Relationships: []
